@@ -1,216 +1,366 @@
-node-sensortag
-==============
+# node-sensortag
 
-node.js lib for the TI SensorTag
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sandeepmistry/node-sensortag?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Install
--------
 
+Node.js lib for the [TI SensorTag](http://www.ti.com/tool/cc2541dk-sensor) and [TI CC2650 SensorTag](http://www.ti.com/tool/cc2650stk)
+
+## Prerequisites
+
+ * [node-gyp install guide](https://github.com/nodejs/node-gyp#installation)
+ * [noble prerequisites](https://github.com/sandeepmistry/noble#prerequisites)
+
+## Install
+
+```sh
 npm install sensortag
+```
 
-Usage
------
+## Examples
 
-    var SensorTag = require('sensortag');
+See [test.js](test.js) or [sensorTag folder in Tom Igoe's BluetoothLE-Examples repo ](https://github.com/tigoe/BluetoothLE-Examples/tree/master/sensorTag)
 
-__Discover__
+## Usage
 
-    SensorTag.discover(callback(sensorTag)[, uuid]);
+```javascript
+var SensorTag = require('sensortag');
+```
 
-Optional SensorTag ```uuid``` to scan for, obtained from previous discover ```sensorTag.uuid```.
-The ```uuid``` per SensorTag may not be the same across machines. 
+### Discover
 
-__Connect__
+#### One
 
-    sensorTag.connect(callback);
+```javascript
+SensorTag.discover(callback(sensorTag));
+```
 
-__Disconnect__
+#### All
 
-    sensorTag.disconnect(callback);
+```javascript
+function onDiscover(sensorTag) {
+  // ...
+}
 
-__Reconnect__
-Tries to reconnect sensortag when connection drops
-    sensorTag.reconnect(callback);
+SensorTag.discoverAll(onDiscover);
 
-__Discover Services and Characteristics__
+SensorTag.stopDiscoverAll(onDiscover);
+```
 
-    sensorTag.discoverServicesAndCharacteristics(callback);
+#### By id
 
-__Device Info__
+```javascript
+SensorTag.discoverById(id, callback(sensorTag));
+```
 
-    sensorTag.readDeviceName(callback(deviceName));
+#### By address
 
-    sensorTag.readSystemId(callback(systemId));
+```javascript
+SensorTag.discoverByAddress(address, callback(sensorTag));
+```
 
-    sensorTag.readSerialNumber(callback(serialNumber));
+#### Properties:
 
-    sensorTag.readFirmwareRevision(callback(firmwareRevision));
+```javascript
+sensorTag = {
+  id: "<peripheral id>",
+  type: "cc2540" | "cc2650"
+}
+```
 
-    sensorTag.readHardwareRevision(callback(hardwareRevision));
+### Connect and Set Up
 
-    sensorTag.readSoftwareRevision(callback(softwareRevision));
+```javascript
+sensorTag.connectAndSetUp(callback(error));
+```
 
-    sensorTag.readManufacturerName(callback(manufacturerName));
+### Disconnect
 
-__IR Temperature Sensor__
+```javascript
+sensorTag.disconnect(callback);
+```
 
-Enable/disable:
+### Disconnect event
 
-    sensorTag.enableIrTemperature(callback);
+Add listener for when SensorTag is disconnected:
 
-    sensorTag.disableIrTemperature(callback);
+```javascript
+sensorTag.once('disconnect', callback);
+```
 
-Read:
+### Device Info
 
-    sensorTag.readIrTemperature(callback(objectTemperature, ambientTemperature));
+```javascript
+sensorTag.readDeviceName(callback(error, deviceName));
 
-Notify/Unnotify:
+sensorTag.readSystemId(callback(error, systemId));
 
-    sensorTag.notifyIrTemperature(callback);
+sensorTag.readSerialNumber(callback(error, serialNumber));
 
-    sensorTag.unnotifyIrTemperature(callback);
+sensorTag.readFirmwareRevision(callback(error, firmwareRevision));
 
-    sensorTag.on('irTemperatureChange', callback(objectTemperature, ambientTemperature));
+sensorTag.readHardwareRevision(callback(error, hardwareRevision));
 
-__Accelerometer__
+sensorTag.readSoftwareRevision(callback(error, softwareRevision));
 
-Enable/disable/configure:
+sensorTag.readManufacturerName(callback(error, manufacturerName));
+```
 
-    sensorTag.enableAccelerometer(callback);
+### IR Temperature Sensor
 
-    sensorTag.disableAccelerometer(callback);
+#### Enable/disable
 
-    sensorTag.setAccelerometerPeriod(period, callback); // period 1 - 2550 ms, default period is 2000 ms
+```javascript
+sensorTag.enableIrTemperature(callback(error));
 
-Read:
+sensorTag.disableIrTemperature(callback(error));
 
-    sensorTag.readAccelerometer(callback(x, y, z));
+sensorTag.setIrTemperaturePeriod(period, callback(error)); // period min 300ms, default period is 1000 ms
+```
 
-Notify/Unnotify:
+#### Read
 
-    sensorTag.notifyAccelerometer(callback);
+```javascript
+sensorTag.readIrTemperature(callback(error, objectTemperature, ambientTemperature));
+```
 
-    sensorTag.unnotifyAccelerometer(callback);
+#### Notify/Unnotify
 
-    sensorTag.on('accelerometerChange', callback(x, y, z));
+```javascript
+sensorTag.notifyIrTemperature(callback(error));
 
-__Humidity Sensor__
+sensorTag.unnotifyIrTemperature(callback(error));
 
-Enable/disable:
+sensorTag.on('irTemperatureChange', callback(objectTemperature, ambientTemperature));
+```
 
-    sensorTag.enableHumidity(callback);
+### Accelerometer
 
-    sensorTag.disableHumidity(callback);
+#### Enable/disable/configure
 
-Read:
+```javascript
+sensorTag.enableAccelerometer(callback(error));
 
-    sensorTag.readHumidity(callback(temperature, humidity));
+sensorTag.disableAccelerometer(callback(error));
 
-Notify/Unnotify:
+// CC2540: period 1 - 2550 ms, default period is 2000 ms
+// CC2650: period 100 - 2550 ms, default period is 1000 ms
+sensorTag.setAccelerometerPeriod(period, callback(error));
+```
 
-    sensorTag.notifyHumidity(callback);
+#### Read
 
-    sensorTag.unnotifyHumidity(callback);
+```javascript
+sensorTag.readAccelerometer(callback(error, x, y, z));
+```
 
-    sensorTag.on('humidityChange', callback(temperature, humidity));
+#### Notify/Unnotify
 
-__Magnetometer__
+```javascript
+sensorTag.notifyAccelerometer(callback(error));
 
-Enable/disable:
+sensorTag.unnotifyAccelerometer(callback(error));
 
-    sensorTag.enableMagnetometer(callback);
+sensorTag.on('accelerometerChange', callback(x, y, z));
+```
 
-    sensorTag.disableMagnetometer(callback);
+### Humidity Sensor
 
-    sensorTag.setMagnetometerPeriod(period, callback); // period 1 - 2550 ms, default period is 2000 ms
+#### Enable/disable
 
-Read:
+```javascript
+sensorTag.enableHumidity(callback(error));
 
-    sensorTag.readMagnetometer(callback(x, y, z));
+sensorTag.disableHumidity(callback(error));
 
-Notify/Unnotify:
+sensorTag.setHumidityPeriod(period, callback(error));
+```
 
-    sensorTag.notifyMagnetometer(callback);
+#### Read
 
-    sensorTag.unnotifyMagnetometer(callback);
+```javascript
+sensorTag.readHumidity(callback(error, temperature, humidity));
+```
 
-    sensorTag.on('magnetometerChange', callback(x, y, z));
+#### Notify/Unnotify
 
-__Barometric Pressure Sensor__
+```javascript
+sensorTag.notifyHumidity(callback(error));
 
-Enable/disable:
+sensorTag.unnotifyHumidity(callback(error));
 
-    sensorTag.enableBarometricPressure(callback);
+sensorTag.on('humidityChange', callback(temperature, humidity));
+```
 
-    sensorTag.disableBarometricPressure(callback);
+### Magnetometer
 
-Read:
+#### Enable/disable
 
-    sensorTag.readBarometricPressure(callback(pressure));
+```javascript
+sensorTag.enableMagnetometer(callback(error));
 
-Notify/Unnotify:
+sensorTag.disableMagnetometer(callback(error));
 
-    sensorTag.notifyBarometricPressure(callback);
+// CC2540: period 1 - 2550 ms, default period is 2000 ms
+// CC2650: period 100 - 2550 ms, default period is 1000 ms
+sensorTag.setMagnetometerPeriod(period, callback(error));
+```
 
-    sensorTag.unnotifyBarometricPressure(callback);
+#### Read
 
-    sensorTag.on('barometricPressureChange', callback(pressure));
+```javascript
+sensorTag.readMagnetometer(callback(error, x, y, z));
+```
 
-__Gyroscope__
+#### Notify/Unnotify
 
-Enable/disable:
+```javascript
+sensorTag.notifyMagnetometer(callback(error));
 
-    sensorTag.enableGyroscope(callback);
+sensorTag.unnotifyMagnetometer(callback(error));
 
-    sensorTag.disableGyroscope(callback);
+sensorTag.on('magnetometerChange', callback(x, y, z));
+```
 
-Read:
+### Barometric Pressure Sensor
 
-    sensorTag.readGyroscope(callback(x, y, z));
+#### Enable/disable
 
-Notify/Unnotify:
+```javascript
+sensorTag.enableBarometricPressure(callback(error));
 
-    sensorTag.notifyGyroscope(callback);
+sensorTag.disableBarometricPressure(callback(error));
 
-    sensorTag.unnotifyGyroscope(callback);
+sensorTag.setBarometricPressurePeriod(period, callback(error)); // period 100 - 2550 ms
+```
 
-    sensorTag.on('gyroscopeChange', callback(x, y, z));
+#### Read
 
-__Simple Key__
+```javascript
+sensorTag.readBarometricPressure(callback(error, pressure));
+```
 
-Notify/Unnotify:
+#### Notify/Unnotify
 
-    sensorTag.notifySimpleKey(callback);
+```javascript
+sensorTag.notifyBarometricPressure(callback(error));
 
-    sensorTag.unnotifySimpleKey(callback);
+sensorTag.unnotifyBarometricPressure(callback(error));
 
-    sensorTag.on('simpleKeyChange', callback(left, right));
-    
-__Battery Level__
+sensorTag.on('barometricPressureChange', callback(pressure));
+```
 
-Read:
+### Gyroscope
 
-    sensorTag.readBatteryLevel(callback(level));
+#### Enable/disable/configure
 
-Notify/Unnotify:
+```javascript
+sensorTag.enableGyroscope(callback(error));
 
-    sensorTag.notifyBatteryLevel(callback);
+sensorTag.disableGyroscope(callback(error));
 
-    sensorTag.unnotifyBatteryLevel(callback);
+// period 100 - 2550 ms, default period is 1000 ms
+sensorTag.setGyroscopePeriod(period, callback(error));
+```
 
-    sensorTag.on('batteryLevelChange', callback(level));    
+#### Read
 
-__Emitted events__
+```javascript
+sensorTag.readGyroscope(callback(error, x, y, z));
+```
 
- * 'connect'
- * 'discconnect'
- * 'connectionDrop'
- * 'reconnect'
- * 'irTemperatureChange'
- * 'accelerometerChange'
- * 'humidityChange'
- * 'magnetometerChange'
- * 'barometricPressureChange'
- * 'gyroscopeChange'
- * 'simpleKeyChange'
- * 'batteryLevelChange'
+#### Notify/Unnotify
+
+```javascript
+sensorTag.notifyGyroscope(callback(error));
+
+sensorTag.unnotifyGyroscope(callback(error));
+
+sensorTag.on('gyroscopeChange', callback(x, y, z));
+```
+
+### IO (CC2650 only)
+
+#### Data read/write
+
+```javascript
+sensorTag.readIoData(callback(error, value));
+sensorTag.writeIoData(value, callback(error));
+```
+
+#### Config read/write
+
+```javascript
+sensorTag.readIoConfig(callback(error, value));
+sensorTag.writeIoConfig(value, callback(error));
+```
+
+### Luxometer (CC2650 only)
+
+#### Enable/disable/configure
+
+```javascript
+sensorTag.enableLuxometer(callback(error));
+
+sensorTag.disableLuxometer(callback(error));
+
+sensorTag.setLuxometerPeriod(period, callback(error));
+```
+
+#### Read
+
+```javascript
+sensorTag.readLuxometer(callback(error, lux));
+```
+
+#### Notify/Unnotify
+
+```javascript
+sensorTag.notifyLuxometer(callback(error));
+
+sensorTag.unnotifyLuxometer(callback(error));
+
+sensorTag.on('luxometerChange', callback(lux));
+```
+
+### Simple Key
+
+#### Notify/Unnotify
+
+```javascript
+sensorTag.notifySimpleKey(callback(error));
+
+sensorTag.unnotifySimpleKey(callback(error));
+```
+
+CC2540:
+
+```javascript
+sensorTag.on('simpleKeyChange', callback(left, right));
+```
+
+CC2650:
+
+```javascript
+sensorTag.on('simpleKeyChange', callback(left, right, reedRelay));
+```
+
+### BATTERY
+
+#### Notify/Unnotify
+
+```javascript
+sensorTag.notifyBatteryLevel(callback(error));
+
+sensorTag.unnotifyBatteryLevel(callback(error));
+```
+
+
+```javascript
+sensorTag.on('batteryLevelChange', callback(level));
+```
+
+#### Data read
+
+```javascript
+sensorTag.readBatteryLevel(callback(level));
+```
